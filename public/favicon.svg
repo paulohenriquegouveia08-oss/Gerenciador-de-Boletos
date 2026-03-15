@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#4f46e5"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="108" fill="url(#bg)"/>
+  <!-- Document icon -->
+  <rect x="156" y="80" width="200" height="260" rx="16" fill="rgba(255,255,255,0.95)"/>
+  <rect x="186" y="130" width="100" height="8" rx="4" fill="#6366f1" opacity="0.6"/>
+  <rect x="186" y="155" width="140" height="8" rx="4" fill="#cbd5e1"/>
+  <rect x="186" y="180" width="120" height="8" rx="4" fill="#cbd5e1"/>
+  <rect x="186" y="205" width="140" height="8" rx="4" fill="#cbd5e1"/>
+  <rect x="186" y="230" width="80" height="8" rx="4" fill="#cbd5e1"/>
+  <rect x="186" y="270" width="140" height="16" rx="4" fill="#e2e8f0"/>
+  <rect x="186" y="270" width="140" height="16" rx="4" fill="#e2e8f0"/>
+  <!-- Barcode lines -->
+  <g transform="translate(156, 350)">
+    <rect x="40" y="0" width="3" height="50" fill="#1e293b"/>
+    <rect x="48" y="0" width="2" height="50" fill="#1e293b"/>
+    <rect x="55" y="0" width="4" height="50" fill="#1e293b"/>
+    <rect x="64" y="0" width="2" height="50" fill="#1e293b"/>
+    <rect x="70" y="0" width="3" height="50" fill="#1e293b"/>
+    <rect x="78" y="0" width="5" height="50" fill="#1e293b"/>
+    <rect x="88" y="0" width="2" height="50" fill="#1e293b"/>
+    <rect x="95" y="0" width="3" height="50" fill="#1e293b"/>
+    <rect x="103" y="0" width="4" height="50" fill="#1e293b"/>
+    <rect x="112" y="0" width="2" height="50" fill="#1e293b"/>
+    <rect x="119" y="0" width="3" height="50" fill="#1e293b"/>
+    <rect x="127" y="0" width="5" height="50" fill="#1e293b"/>
+    <rect x="137" y="0" width="2" height="50" fill="#1e293b"/>
+    <rect x="144" y="0" width="3" height="50" fill="#1e293b"/>
+    <rect x="152" y="0" width="4" height="50" fill="#1e293b"/>
+  </g>
+  <!-- Checkmark circle -->
+  <circle cx="356" cy="100" r="40" fill="#22c55e"/>
+  <polyline points="336,100 350,115 376,88" fill="none" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

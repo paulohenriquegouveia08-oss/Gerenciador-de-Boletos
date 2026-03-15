@@ -1,0 +1,154 @@
+.details-page {
+    min-height: 100vh;
+    max-width: 600px;
+    margin: 0 auto;
+    animation: fadeIn 0.4s ease;
+}
+
+.details-header {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 1rem 1.2rem;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 10;
+}
+
+.details-header h1 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.details-content {
+    padding: 0 1.2rem 2rem;
+}
+
+.details-top {
+    text-align: center;
+    padding: 1.5rem 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.details-amount {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.details-due-info {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.details-info-list {
+    background: var(--surface-2);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.info-value {
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.details-linha {
+    margin-bottom: 1.5rem;
+}
+
+.details-linha .info-label {
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.linha-box {
+    background: var(--surface-2);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.linha-text {
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    color: var(--accent);
+    word-break: break-all;
+    line-height: 1.5;
+}
+
+.copy-btn {
+    width: 100%;
+}
+
+.details-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    padding: 0.9rem 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.btn-success:active {
+    transform: scale(0.97);
+}
+
+.btn-success:disabled {
+    opacity: 0.6;
+}
+
+.btn-danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 14px;
+    padding: 0.9rem 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.btn-danger:active {
+    transform: scale(0.97);
+}
