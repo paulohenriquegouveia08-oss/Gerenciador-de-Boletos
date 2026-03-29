@@ -44,6 +44,22 @@ export default function Dashboard() {
         });
     }, [boletos]);
 
+    const handleTestNotification = async () => {
+        let permission = Notification.permission;
+        if (permission === 'default') {
+            permission = await Notification.requestPermission();
+        }
+
+        if (permission === 'granted') {
+            new Notification('Notificação de Teste 🔔', {
+                body: 'Funcionando! O sistema está pronto para avisar sobre seus boletos.',
+                icon: '/icons/icon-192.png',
+            });
+        } else {
+            alert('Permissão de notificação negada. Ative nas configurações do seu navegador para receber avisos de boletos vencendo.');
+        }
+    };
+
     return (
         <div className="dashboard-page">
             <header className="dashboard-header">
@@ -51,9 +67,14 @@ export default function Dashboard() {
                     <p className="dashboard-greeting">Olá 👋</p>
                     <h1 className="dashboard-title">Meus Boletos</h1>
                 </div>
-                <button className="btn-icon" onClick={signOut} title="Sair" id="logout-button">
-                    🚪
-                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    <button className="btn-icon" onClick={handleTestNotification} title="Testar Notificações" id="test-notification-button" style={{ background: '#4bc0c0', color: '#fff' }}>
+                        🔔
+                    </button>
+                    <button className="btn-icon" onClick={signOut} title="Sair" id="logout-button">
+                        🚪
+                    </button>
+                </div>
             </header>
 
             <section className="summary-grid">
