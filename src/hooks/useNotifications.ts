@@ -20,6 +20,29 @@ export function useNotifications() {
                         { onConflict: 'user_id,token' }
                     );
             }
+
+            // Verificar boletos vencendo hoje e notificar localmente
+            if (Notification.permission === 'granted') {
+                const todayStr = new Date().toISOString().split('T')[0];
+                const lastNotified = localStorage.getItem('last_notified_date');
+
+                if (lastNotified !== todayStr) {
+                    const { data } = await supabase
+                        .from('boletos')
+                        .select('recebedor, valor')
+                        .eq('user_id', user.id)
+                        .eq('status', 'pendente')
+                        .eq('vencimento', todayStr);
+
+                    if (data && data.length > 0) {
+                        new Notification('Boletos Vencendo Hoje', {
+                            body: `Você tem ${data.length} boleto(s) vencendo hoje! Não esqueça de pagar.`,
+                            icon: '/icons/icon-192.png',
+                        });
+                        localStorage.setItem('last_notified_date', todayStr);
+                    }
+                }
+            }
         };
 
         setup();

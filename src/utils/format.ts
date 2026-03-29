@@ -79,21 +79,28 @@ export function daysUntilDue(vencimento: string): number {
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
 
-/**
- * Copia texto para a área de transferência
- */
 export async function copyToClipboard(text: string): Promise<boolean> {
+    const cleanText = text.trim();
     try {
-        await navigator.clipboard.writeText(text);
-        return true;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(cleanText);
+            return true;
+        }
+        throw new Error('Clipboard API not available');
     } catch {
-        // Fallback para browsers mais antigos
+        // Fallback para browsers mais antigos ou sem HTTPS
         const textarea = document.createElement('textarea');
-        textarea.value = text;
+        textarea.value = cleanText;
+        textarea.contentEditable = 'true';
+        textarea.readOnly = false;
         textarea.style.position = 'fixed';
         textarea.style.left = '-9999px';
+        textarea.style.top = '0';
         document.body.appendChild(textarea);
+
         textarea.select();
+        textarea.setSelectionRange(0, 999999); // Mobile Safari/Android WebKit coverage
+
         try {
             document.execCommand('copy');
             document.body.removeChild(textarea);
