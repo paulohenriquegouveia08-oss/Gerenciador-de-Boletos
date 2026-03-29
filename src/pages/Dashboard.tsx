@@ -45,16 +45,38 @@ export default function Dashboard() {
     }, [boletos]);
 
     const handleTestNotification = async () => {
+        if (!('Notification' in window)) {
+            alert('Seu navegador não suporta notificações.');
+            return;
+        }
+
         let permission = Notification.permission;
         if (permission === 'default') {
             permission = await Notification.requestPermission();
         }
 
         if (permission === 'granted') {
-            new Notification('Notificação de Teste 🔔', {
-                body: 'Funcionando! O sistema está pronto para avisar sobre seus boletos.',
-                icon: '/icons/icon-192.png',
-            });
+            try {
+                // Usar Service Worker para notificações (funciona em mobile/PWA)
+                if ('serviceWorker' in navigator) {
+                    const registration = await navigator.serviceWorker.ready;
+                    await registration.showNotification('Notificação de Teste 🔔', {
+                        body: 'Funcionando! O sistema está pronto para avisar sobre seus boletos.',
+                        icon: '/icons/icon-192.png',
+                        badge: '/icons/icon-192.png',
+                        tag: 'test-notification',
+                    } as NotificationOptions);
+                } else {
+                    // Fallback para desktop sem SW
+                    new Notification('Notificação de Teste 🔔', {
+                        body: 'Funcionando! O sistema está pronto para avisar sobre seus boletos.',
+                        icon: '/icons/icon-192.png',
+                    });
+                }
+            } catch (err) {
+                console.error('Erro ao enviar notificação:', err);
+                alert('Erro ao enviar notificação. Verifique o console para mais detalhes.');
+            }
         } else {
             alert('Permissão de notificação negada. Ative nas configurações do seu navegador para receber avisos de boletos vencendo.');
         }

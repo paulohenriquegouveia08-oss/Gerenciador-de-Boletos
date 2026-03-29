@@ -3,6 +3,29 @@ import { supabase } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
 import { requestNotificationPermission, onForegroundMessage } from '../services/firebase';
 
+async function showLocalNotification(title: string, body: string) {
+    if (Notification.permission !== 'granted') return;
+
+    try {
+        if ('serviceWorker' in navigator) {
+            const registration = await navigator.serviceWorker.ready;
+            await registration.showNotification(title, {
+                body,
+                icon: '/icons/icon-192.png',
+                badge: '/icons/icon-192.png',
+                tag: title, // avoid duplicate notifications with same tag
+            } as NotificationOptions);
+        } else {
+            new Notification(title, {
+                body,
+                icon: '/icons/icon-192.png',
+            });
+        }
+    } catch (err) {
+        console.error('Erro ao exibir notificação:', err);
+    }
+}
+
 export function useNotifications() {
     const { user } = useAuth();
 
@@ -35,10 +58,10 @@ export function useNotifications() {
                         .eq('vencimento', todayStr);
 
                     if (data && data.length > 0) {
-                        new Notification('Boletos Vencendo Hoje', {
-                            body: `Você tem ${data.length} boleto(s) vencendo hoje! Não esqueça de pagar.`,
-                            icon: '/icons/icon-192.png',
-                        });
+                        await showLocalNotification(
+                            'Boletos Vencendo Hoje',
+                            `Você tem ${data.length} boleto(s) vencendo hoje! Não esqueça de pagar.`
+                        );
                         localStorage.setItem('last_notified_date', todayStr);
                     }
                 }
@@ -51,15 +74,11 @@ export function useNotifications() {
         onForegroundMessage((payload: unknown) => {
             const data = payload as { notification?: { title?: string; body?: string } };
             if (data.notification) {
-                // Mostrar notificação nativa se app estiver em primeiro plano
-                if (Notification.permission === 'granted') {
-                    new Notification(data.notification.title || 'Boletos', {
-                        body: data.notification.body,
-                        icon: '/icons/icon-192.png',
-                    });
-                }
+                showLocalNotification(
+                    data.notification.title || 'Boletos',
+                    data.notification.body || ''
+                );
             }
         });
     }, [user]);
 }
-// ignore git
