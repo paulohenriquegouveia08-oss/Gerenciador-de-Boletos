@@ -96,3 +96,55 @@
 .form-group input[type="date"]::-webkit-calendar-picker-indicator {
     filter: invert(1);
 }
+
+.linha-digitavel-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.linha-digitavel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.btn-autofill {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-weight: 500;
+}
+
+.btn-autofill:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+.char-counter {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-align: right;
+    margin-top: -0.2rem;
+    font-weight: 500;
+}
+
+.char-counter.complete {
+    color: #10b981;
+    /* Tailwind emerald-500 */
+}
+
+.char-counter.error {
+    color: #ef4444;
+    /* Tailwind red-500 */
+}

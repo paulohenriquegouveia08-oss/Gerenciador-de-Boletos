@@ -1,6 +1,7 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useBoletos } from '../hooks/useBoletos';
+import { extractValor, extractVencimento, linhaDigitavelToBarcode } from '../services/barcode';
 import BottomNav from '../components/BottomNav';
 import './BoletoForm.css';
 
@@ -29,6 +30,29 @@ export default function AddBoleto() {
         if (val) setValor(val);
         if (venc) setVencimento(venc);
     }, [searchParams]);
+
+    const handleAutoFill = () => {
+        if (!linhaDigitavel) return;
+        const code = linhaDigitavel.replace(/\D/g, '');
+        if (code.length < 47) {
+            setError('A linha digitável deve ter pelo menos 47 dígitos para o preenchimento automático.');
+            return;
+        }
+
+        const valorExtracted = extractValor(linhaDigitavel);
+        const vencimentoExtracted = extractVencimento(linhaDigitavel);
+        const barcodeExtracted = linhaDigitavelToBarcode(linhaDigitavel);
+
+        if (valorExtracted > 0) setValor(valorExtracted.toFixed(2));
+        if (vencimentoExtracted) setVencimento(vencimentoExtracted);
+        if (barcodeExtracted && barcodeExtracted !== code) setCodigoBarras(barcodeExtracted);
+
+        setError('');
+    };
+
+    const digitsCount = linhaDigitavel.replace(/\D/g, '').length;
+    const isBoletoTributo = linhaDigitavel.trim().startsWith('8');
+    const targetDigits = isBoletoTributo ? 48 : 47;
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -105,8 +129,13 @@ export default function AddBoleto() {
                     </div>
                 </div>
 
-                <div className="form-group">
-                    <label htmlFor="linha-digitavel">Linha Digitável *</label>
+                <div className="form-group linha-digitavel-container">
+                    <div className="linha-digitavel-header">
+                        <label htmlFor="linha-digitavel">Linha Digitável *</label>
+                        <button type="button" className="btn-autofill" onClick={handleAutoFill}>
+                            ✨ Auto-preencher
+                        </button>
+                    </div>
                     <textarea
                         id="linha-digitavel"
                         value={linhaDigitavel}
@@ -115,6 +144,9 @@ export default function AddBoleto() {
                         rows={3}
                         required
                     />
+                    <div className={`char-counter ${digitsCount === targetDigits ? 'complete' : digitsCount > targetDigits ? 'error' : ''}`}>
+                        {digitsCount} / {targetDigits} dígitos
+                    </div>
                 </div>
 
                 <div className="form-group">

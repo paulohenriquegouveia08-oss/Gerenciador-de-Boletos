@@ -135,8 +135,18 @@ export function extractVencimento(barcode: string): string | null {
         const fator = parseInt(code.substring(5, 9), 10);
         if (fator === 0) return null;
 
-        const baseDate = new Date(1997, 9, 7); // 07/10/1997
-        baseDate.setDate(baseDate.getDate() + fator);
+        const baseDate = new Date(Date.UTC(1997, 9, 7)); // 1997-10-07 in UTC
+        baseDate.setUTCDate(baseDate.getUTCDate() + fator);
+
+        // O fator do boleto zera e recomeça a conta de 1000 em 22/02/2025.
+        // A diferença exata entre os ciclos é de 9000 dias.
+        // Se a data calculada for muito antiga (-10 anos), pulamos para o ciclo atual/novo.
+        const limitDate = new Date();
+        limitDate.setFullYear(limitDate.getFullYear() - 10);
+
+        while (baseDate < limitDate) {
+            baseDate.setUTCDate(baseDate.getUTCDate() + 9000);
+        }
 
         return baseDate.toISOString().split('T')[0]; // YYYY-MM-DD
     }
