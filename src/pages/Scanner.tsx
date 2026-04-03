@@ -39,19 +39,22 @@ export default function Scanner() {
                 );
                 const deviceId = backCamera?.deviceId || devices[devices.length - 1].deviceId;
 
-                await reader.decodeFromVideoDevice(deviceId, videoRef.current!, (result, err) => {
-                    if (result) {
-                        const code = result.getText();
-                        if (isValidBarcode(code)) {
-                            setScannedCode(code);
-                            setScanning(false);
-                            reader.reset();
+                await reader.decodeFromConstraints(
+                    { video: { deviceId: { exact: deviceId }, width: { min: 1280, ideal: 1920 }, height: { min: 720, ideal: 1080 } } },
+                    videoRef.current!,
+                    (result, err) => {
+                        if (result) {
+                            const code = result.getText();
+                            if (isValidBarcode(code)) {
+                                setScannedCode(code);
+                                setScanning(false);
+                                reader.reset();
+                            }
                         }
-                    }
-                    if (err && !(err instanceof Error && err.name === 'NotFoundException')) {
-                        // ignore NotFoundException (normal when no code in view)
-                    }
-                });
+                        if (err && !(err instanceof Error && err.name === 'NotFoundException')) {
+                            // ignore NotFoundException (normal when no code in view)
+                        }
+                    });
             } catch (err) {
                 console.error('Scanner error:', err);
                 setError('Não foi possível acessar a câmera. Verifique as permissões.');
@@ -99,16 +102,19 @@ export default function Scanner() {
             );
             const deviceId = backCamera?.deviceId || devices[devices.length - 1].deviceId;
 
-            reader.decodeFromVideoDevice(deviceId, videoRef.current!, (result) => {
-                if (result) {
-                    const code = result.getText();
-                    if (isValidBarcode(code)) {
-                        setScannedCode(code);
-                        setScanning(false);
-                        reader.reset();
+            reader.decodeFromConstraints(
+                { video: { deviceId: { exact: deviceId }, width: { min: 1280, ideal: 1920 }, height: { min: 720, ideal: 1080 } } },
+                videoRef.current!,
+                (result) => {
+                    if (result) {
+                        const code = result.getText();
+                        if (isValidBarcode(code)) {
+                            setScannedCode(code);
+                            setScanning(false);
+                            reader.reset();
+                        }
                     }
-                }
-            });
+                });
         });
     };
 

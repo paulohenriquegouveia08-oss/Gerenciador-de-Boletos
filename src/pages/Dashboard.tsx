@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useBoletos } from '../hooks/useBoletos';
-import { formatCurrency } from '../utils/format';
+import { formatCurrency, getMonthName } from '../utils/format';
 import BoletoCard from '../components/BoletoCard';
 import SummaryCard from '../components/SummaryCard';
 import Loading from '../components/Loading';
@@ -12,14 +12,14 @@ export default function Dashboard() {
     const { signOut } = useAuth();
     const { boletos, loading } = useBoletos();
 
-    const stats = useMemo(() => {
-        const now = new Date();
-        const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
+    const now = new Date();
+    const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
+    const [selectedYear, setSelectedYear] = useState(now.getFullYear());
 
+    const stats = useMemo(() => {
         const monthBoletos = boletos.filter((b) => {
             const d = new Date(b.vencimento + 'T12:00:00');
-            return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+            return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
         });
 
         const pendentes = monthBoletos.filter((b) => b.status === 'pendente');
@@ -36,13 +36,18 @@ export default function Dashboard() {
 
     // Show all boletos ordered by vencimento, pendentes first
     const sortedBoletos = useMemo(() => {
-        return [...boletos].sort((a, b) => {
+        const monthBoletos = boletos.filter((b) => {
+            const d = new Date(b.vencimento + 'T12:00:00');
+            return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
+        });
+
+        return monthBoletos.sort((a, b) => {
             if (a.status !== b.status) {
                 return a.status === 'pendente' ? -1 : 1;
             }
             return new Date(a.vencimento).getTime() - new Date(b.vencimento).getTime();
         });
-    }, [boletos]);
+    }, [boletos, selectedMonth, selectedYear]);
 
     const handleTestNotification = async () => {
         if (!('Notification' in window)) {
@@ -99,6 +104,38 @@ export default function Dashboard() {
                 </div>
             </header>
 
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 1.2rem 1rem 1.2rem', background: 'var(--surface)', padding: '0.8rem 1rem', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+                <button
+                    style={{ background: 'var(--surface-2)', border: 'none', borderRadius: '8px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary)', cursor: 'pointer' }}
+                    onClick={() => {
+                        if (selectedMonth === 0) {
+                            setSelectedMonth(11);
+                            setSelectedYear((y) => y - 1);
+                        } else {
+                            setSelectedMonth((m) => m - 1);
+                        }
+                    }}
+                >
+                    ◀
+                </button>
+                <span style={{ fontWeight: 600, fontSize: '1.05rem', color: 'var(--text-primary)', textTransform: 'capitalize' }}>
+                    {getMonthName(selectedMonth)} {selectedYear}
+                </span>
+                <button
+                    style={{ background: 'var(--surface-2)', border: 'none', borderRadius: '8px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary)', cursor: 'pointer' }}
+                    onClick={() => {
+                        if (selectedMonth === 11) {
+                            setSelectedMonth(0);
+                            setSelectedYear((y) => y + 1);
+                        } else {
+                            setSelectedMonth((m) => m + 1);
+                        }
+                    }}
+                >
+                    ▶
+                </button>
+            </div>
+
             <section className="summary-grid">
                 <SummaryCard
                     icon="📄"
@@ -122,8 +159,8 @@ export default function Dashboard() {
 
             <section className="boletos-section">
                 <h2 className="section-title">
-                    Todos os boletos
-                    <span className="section-count">{boletos.length}</span>
+                    Boletos do mês
+                    <span className="section-count">{sortedBoletos.length}</span>
                 </h2>
 
                 {loading ? (
