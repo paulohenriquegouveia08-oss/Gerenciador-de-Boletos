@@ -34,59 +34,65 @@ export const handler = async (event: any, context: any) => {
         // Data atual (ex: 2026-04-02)
         const todayStr = new Date().toISOString().split('T')[0];
 
-        // 1. Pegar boletos pendentes que vencem hoje
+        // 1. Pegar todos os tokens FCM (para notificar todo mundo)
+        const { data: tokens, error: tokensError } = await supabase
+            .from('fcm_tokens')
+            .select('user_id, token');
+
+        if (tokensError || !tokens) {
+            return { statusCode: 500, body: JSON.stringify({ error: tokensError || 'Erro ao buscar tokens FCM' }) };
+        }
+
+        if (tokens.length === 0) {
+            return { statusCode: 200, body: JSON.stringify({ message: 'Nenhum dispositivo registrado.' }) };
+        }
+
+        // 2. Pegar boletos pendentes que vencem hoje
         const { data: boletos, error: boletosError } = await supabase
             .from('boletos')
             .select('user_id, recebedor, valor')
             .eq('status', 'pendente')
             .eq('vencimento', todayStr);
 
-        if (boletosError || !boletos) {
+        if (boletosError) {
             return { statusCode: 500, body: JSON.stringify({ error: boletosError || 'Erro ao buscar boletos' }) };
         }
 
-        if (boletos.length === 0) {
-            return { statusCode: 200, body: JSON.stringify({ message: 'Nenhum boleto vencendo hoje.' }) };
-        }
-
-        // Agrupar estatísticas por user_id
-        const usersToNotify: Record<string, { count: number, totalAmount: number }> = {};
-        for (const b of boletos) {
-            if (!usersToNotify[b.user_id]) {
-                usersToNotify[b.user_id] = { count: 0, totalAmount: 0 };
+        // 3. Agrupar estatísticas por user_id
+        const usersWithBoletos: Record<string, { count: number, totalAmount: number }> = {};
+        for (const b of (boletos || [])) {
+            if (!usersWithBoletos[b.user_id]) {
+                usersWithBoletos[b.user_id] = { count: 0, totalAmount: 0 };
             }
-            usersToNotify[b.user_id].count++;
-            usersToNotify[b.user_id].totalAmount += Number(b.valor);
-        }
-
-        // 2. Pegar tokens FCM dos usuários agrupados
-        const userIds = Object.keys(usersToNotify);
-        const { data: tokens, error: tokensError } = await supabase
-            .from('fcm_tokens')
-            .select('user_id, token')
-            .in('user_id', userIds);
-
-        if (tokensError || !tokens) {
-            return { statusCode: 500, body: JSON.stringify({ error: tokensError || 'Erro ao buscar tokens FCM' }) };
+            usersWithBoletos[b.user_id].count++;
+            usersWithBoletos[b.user_id].totalAmount += Number(b.valor);
         }
 
         if (!admin.apps.length) {
             return { statusCode: 500, body: JSON.stringify({ error: 'Configuração do Firebase admin ausente nas variáveis de ambiente do Netlify.' }) };
         }
 
-        // 3. Enviar as notificações Push
+        // 4. Enviar as notificações Push para TODOS os tokens
         const sendPromises = tokens.map(async (fcm) => {
-            const userStats = usersToNotify[fcm.user_id];
+            const userStats = usersWithBoletos[fcm.user_id];
 
-            const title = 'Boletos Vencendo Hoje 🔔';
-            const body = `Você tem ${userStats.count} boleto(s) vencendo hoje, somando R$${userStats.totalAmount.toFixed(2)}. Não esqueça de pagar!`;
+            let title = '';
+            let body = '';
+
+            if (userStats) {
+                title = 'Boletos Vencendo Hoje 🔔';
+                body = `Você tem ${userStats.count} boleto(s) vencendo hoje, somando R$${userStats.totalAmount.toFixed(2)}. Não esqueça de pagar!`;
+            } else {
+                title = 'Tudo limpo!';
+                body = 'Obaa hoje não temos boletos para pagar 🎉';
+            }
 
             try {
                 await admin.messaging().send({
                     token: fcm.token,
                     notification: { title, body },
                 });
-                return { success: true, token: fcm.token };
+                return { success: true, token: fcm.token, type: userStats ? 'has_boleto' : 'clear' };
             } catch (err: any) {
                 console.error(`Error sending to token ${fcm.token}:`, err);
                 return { success: false, token: fcm.token, error: err.message };

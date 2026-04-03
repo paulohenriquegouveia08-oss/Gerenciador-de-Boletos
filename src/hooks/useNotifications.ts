@@ -59,11 +59,16 @@ export function useNotifications() {
 
                     if (data && data.length > 0) {
                         await showLocalNotification(
-                            'Boletos Vencendo Hoje',
+                            'Boletos Vencendo Hoje 🔔',
                             `Você tem ${data.length} boleto(s) vencendo hoje! Não esqueça de pagar.`
                         );
-                        localStorage.setItem('last_notified_date', todayStr);
+                    } else {
+                        await showLocalNotification(
+                            'Tudo limpo! 🌟',
+                            'Obaa hoje não temos boletos para pagar 🎉'
+                        );
                     }
+                    localStorage.setItem('last_notified_date', todayStr);
                 }
             }
         };
