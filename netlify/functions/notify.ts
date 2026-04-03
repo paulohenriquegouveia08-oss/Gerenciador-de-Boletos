@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import * as admin from 'firebase-admin';
+import { schedule } from '@netlify/functions';
 
 // Reusing firebase-admin initialization to avoid multiple apps error
 if (!admin.apps.length) {
@@ -17,7 +18,7 @@ if (!admin.apps.length) {
     }
 }
 
-export const handler = async (event: any, context: any) => {
+const notifyHandler = async (event: any, context: any) => {
     try {
         const supabaseUrl = process.env.VITE_SUPABASE_URL;
         const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -31,8 +32,17 @@ export const handler = async (event: any, context: any) => {
 
         const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-        // Data atual (ex: 2026-04-02)
-        const todayStr = new Date().toISOString().split('T')[0];
+        // Data atual no fuso horário do Brasil
+        const now = new Date();
+        const formatter = new Intl.DateTimeFormat('pt-BR', {
+            timeZone: 'America/Sao_Paulo',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+        });
+        // O formato pt-BR retorna dd/mm/yyyy
+        const [day, month, year] = formatter.format(now).split('/');
+        const todayStr = `${year}-${month}-${day}`;
 
         // 1. Pegar todos os tokens FCM (para notificar todo mundo)
         const { data: tokens, error: tokensError } = await supabase
@@ -114,3 +124,7 @@ export const handler = async (event: any, context: any) => {
         return { statusCode: 500, body: JSON.stringify({ error: e.message }) };
     }
 };
+
+// Configuração do Cron Job do Netlify
+// Roda todo dia às 08:00 AM no horário de Brasília (UTC-3), que é 11:00 AM UTC
+export const handler = schedule("0 11 * * *", notifyHandler);
