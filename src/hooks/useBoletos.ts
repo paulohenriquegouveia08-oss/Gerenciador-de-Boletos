@@ -35,6 +35,21 @@ export function useBoletos() {
     const addBoleto = async (boleto: BoletoInsert): Promise<{ success: boolean; error?: string }> => {
         if (!user) return { success: false, error: 'Usuário não autenticado' };
 
+        // Verifica se já existe um boleto com a mesma linha digitável
+        const linhaDigitavelNormalizada = boleto.linha_digitavel.replace(/\D/g, '');
+        const { data: existingBoletos } = await supabase
+            .from('boletos')
+            .select('id, linha_digitavel')
+            .eq('user_id', user.id);
+
+        const duplicado = existingBoletos?.find(
+            (b) => b.linha_digitavel.replace(/\D/g, '') === linhaDigitavelNormalizada
+        );
+
+        if (duplicado) {
+            return { success: false, error: 'Este boleto já está cadastrado no sistema. A linha digitável informada já existe.' };
+        }
+
         const { error: err } = await supabase
             .from('boletos')
             .insert({ ...boleto, user_id: user.id });
