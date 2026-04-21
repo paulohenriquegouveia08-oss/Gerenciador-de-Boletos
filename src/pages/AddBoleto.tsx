@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useBoletos } from '../hooks/useBoletos';
 import { extractValor, extractVencimento, linhaDigitavelToBarcode } from '../services/barcode';
@@ -15,8 +15,21 @@ export default function AddBoleto() {
     const [vencimento, setVencimento] = useState('');
     const [linhaDigitavel, setLinhaDigitavel] = useState('');
     const [codigoBarras, setCodigoBarras] = useState('');
+    const [pdfFile, setPdfFile] = useState<File | null>(null);
+    const [pdfPreview, setPdfPreview] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (pdfFile) {
+            const objectUrl = URL.createObjectURL(pdfFile);
+            setPdfPreview(objectUrl);
+            return () => URL.revokeObjectURL(objectUrl);
+        } else {
+            setPdfPreview(null);
+        }
+    }, [pdfFile]);
 
     // Pre-fill from scanner
     useEffect(() => {
@@ -70,7 +83,7 @@ export default function AddBoleto() {
             vencimento,
             linha_digitavel: linhaDigitavel.trim(),
             codigo_barras: codigoBarras || undefined,
-        });
+        }, pdfFile || undefined);
 
         if (result.success) {
             navigate('/');
@@ -158,6 +171,72 @@ export default function AddBoleto() {
                         onChange={(e) => setCodigoBarras(e.target.value)}
                         placeholder="Opcional"
                     />
+                </div>
+
+                <div className="form-group document-upload-group">
+                    <label>Anexar Documento (PDF)</label>
+                    <input
+                        id="documento"
+                        type="file"
+                        accept="application/pdf"
+                        style={{ display: 'none' }}
+                        ref={fileInputRef}
+                        onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) setPdfFile(file);
+                        }}
+                    />
+
+                    {!pdfFile ? (
+                        <button
+                            type="button"
+                            className="btn-upload"
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            <span style={{ fontSize: '1.2rem' }}>📄</span> Selecionar Arquivo PDF
+                        </button>
+                    ) : (
+                        <div className="whatsapp-pdf-card" onClick={() => fileInputRef.current?.click()}>
+                            <button
+                                type="button"
+                                className="btn-remove-file"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPdfFile(null);
+                                    if (fileInputRef.current) fileInputRef.current.value = '';
+                                }}
+                            >
+                                ✕
+                            </button>
+                            <div className="pdf-card-top">
+                                {pdfPreview ? (
+                                    <object
+                                        data={`${pdfPreview}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                                        type="application/pdf"
+                                        style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
+                                    >
+                                        <div className="pdf-preview-text">
+                                            <div className="line title"></div>
+                                            <div className="line"></div>
+                                            <div className="line"></div>
+                                        </div>
+                                    </object>
+                                ) : (
+                                    <div className="pdf-preview-text">
+                                        <div className="line title"></div>
+                                        <div className="line"></div>
+                                        <div className="line"></div>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="pdf-card-bottom">
+                                <p className="pdf-filename">{pdfFile.name}</p>
+                                <p className="pdf-meta">
+                                    {(pdfFile.size / 1024).toFixed(1)} kB • PDF
+                                </p>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <button type="submit" className="btn-primary" disabled={loading} id="save-boleto-button">

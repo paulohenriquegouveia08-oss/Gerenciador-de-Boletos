@@ -108,6 +108,34 @@ export default function BoletoDetails() {
                 </div>
 
                 <div className="details-actions">
+                    {boleto.documento_url && (
+                        <div className="document-actions" style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', width: '100%' }}>
+                            <a
+                                href={boleto.documento_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="btn-secondary"
+                                style={{ flex: 1, textAlign: 'center', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            >
+                                📄 Ver Documento
+                            </a>
+                            {navigator.share && (
+                                <button
+                                    className="btn-secondary"
+                                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                    onClick={() => {
+                                        navigator.share({
+                                            title: `Boleto - ${boleto.recebedor}`,
+                                            url: boleto.documento_url!
+                                        }).catch(console.error);
+                                    }}
+                                >
+                                    ↗️ Compartilhar
+                                </button>
+                            )}
+                        </div>
+                    )}
+
                     {boleto.status === 'pendente' && (
                         <button
                             className="btn-success"

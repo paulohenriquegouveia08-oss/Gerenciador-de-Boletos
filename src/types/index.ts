@@ -6,6 +6,7 @@ export interface Boleto {
     vencimento: string;
     linha_digitavel: string;
     codigo_barras: string | null;
+    documento_url: string | null;
     status: 'pendente' | 'pago';
     data_pagamento: string | null;
     created_at: string;
@@ -17,6 +18,7 @@ export interface BoletoInsert {
     vencimento: string;
     linha_digitavel: string;
     codigo_barras?: string;
+    documento_url?: string;
 }
 
 export interface BoletoUpdate {
@@ -25,6 +27,7 @@ export interface BoletoUpdate {
     vencimento?: string;
     linha_digitavel?: string;
     codigo_barras?: string;
+    documento_url?: string;
     status?: 'pendente' | 'pago';
     data_pagamento?: string | null;
 }

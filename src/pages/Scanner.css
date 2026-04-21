@@ -50,7 +50,9 @@
     justify-content: center;
 }
 
-.scanner-video {
+.scanner-video,
+.scanner-viewport video,
+.scanner-viewport canvas {
     width: 100%;
     height: 100%;
     object-fit: cover;

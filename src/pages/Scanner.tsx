@@ -1,72 +1,78 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BrowserMultiFormatReader, BarcodeFormat, DecodeHintType } from '@zxing/library';
+import Quagga from '@ericblade/quagga2';
 import { barcodeToLinhaDigitavel, extractValor, extractVencimento, isValidBarcode } from '../services/barcode';
 import './Scanner.css';
 
 export default function Scanner() {
     const navigate = useNavigate();
-    const videoRef = useRef<HTMLVideoElement>(null);
-    const readerRef = useRef<BrowserMultiFormatReader | null>(null);
+    const scannerRef = useRef<HTMLDivElement>(null);
     const [error, setError] = useState('');
     const [scanning, setScanning] = useState(true);
     const [scannedCode, setScannedCode] = useState('');
 
     useEffect(() => {
-        const hints = new Map();
-        hints.set(DecodeHintType.POSSIBLE_FORMATS, [
-            BarcodeFormat.ITF,
-            BarcodeFormat.CODE_128,
-            BarcodeFormat.CODE_39,
-            BarcodeFormat.EAN_13,
-        ]);
-        hints.set(DecodeHintType.TRY_HARDER, true);
+        if (!scanning) return;
 
-        const reader = new BrowserMultiFormatReader(hints);
-        readerRef.current = reader;
+        let isQuaggaStarted = false;
 
-        const startScan = async () => {
-            try {
-                const devices = await reader.listVideoInputDevices();
-                if (devices.length === 0) {
-                    setError('Nenhuma câmera encontrada.');
+        const initScanner = async () => {
+            Quagga.init({
+                inputStream: {
+                    type: "LiveStream",
+                    target: scannerRef.current!,
+                    constraints: {
+                        width: { min: 640 },
+                        height: { min: 480 },
+                        facingMode: "environment",
+                        aspectRatio: { min: 1, max: 2 }
+                    },
+                },
+                locator: {
+                    patchSize: "medium",
+                    halfSample: true
+                },
+                numOfWorkers: navigator.hardwareConcurrency ? navigator.hardwareConcurrency : 4,
+                decoder: {
+                    readers: [
+                        "i2of5_reader",
+                        "code_128_reader",
+                        "ean_reader",
+                        "ean_8_reader",
+                        "code_39_reader"
+                    ]
+                },
+                locate: true
+            }, function (err) {
+                if (err) {
+                    console.error('Quagga init failed:', err);
+                    setError('Não foi possível acessar a câmera ou inicializar o scanner.');
                     return;
                 }
+                Quagga.start();
+                isQuaggaStarted = true;
+            });
 
-                // Prefer back camera
-                const backCamera = devices.find(
-                    (d) => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('traseira')
-                );
-                const deviceId = backCamera?.deviceId || devices[devices.length - 1].deviceId;
+            Quagga.onDetected((result) => {
+                const code = result.codeResult.code;
+                if (code && isValidBarcode(code)) {
+                    setScannedCode(code);
+                    setScanning(false);
+                    Quagga.stop();
+                    isQuaggaStarted = false;
+                }
+            });
+        }
 
-                await reader.decodeFromConstraints(
-                    { video: { deviceId: { exact: deviceId }, width: { min: 1280, ideal: 1920 }, height: { min: 720, ideal: 1080 } } },
-                    videoRef.current!,
-                    (result, err) => {
-                        if (result) {
-                            const code = result.getText();
-                            if (isValidBarcode(code)) {
-                                setScannedCode(code);
-                                setScanning(false);
-                                reader.reset();
-                            }
-                        }
-                        if (err && !(err instanceof Error && err.name === 'NotFoundException')) {
-                            // ignore NotFoundException (normal when no code in view)
-                        }
-                    });
-            } catch (err) {
-                console.error('Scanner error:', err);
-                setError('Não foi possível acessar a câmera. Verifique as permissões.');
-            }
-        };
-
-        startScan();
+        initScanner();
 
         return () => {
-            reader.reset();
+            if (isQuaggaStarted) {
+                Quagga.stop();
+            }
+            Quagga.offDetected();
         };
-    }, []);
+    }, [scanning]);
 
     const handleConfirm = () => {
         const linhaDigitavel = barcodeToLinhaDigitavel(scannedCode);
@@ -84,38 +90,8 @@ export default function Scanner() {
 
     const handleRescan = () => {
         setScannedCode('');
-        setScanning(true);
         setError('');
-
-        const hints = new Map();
-        hints.set(DecodeHintType.POSSIBLE_FORMATS, [
-            BarcodeFormat.ITF,
-            BarcodeFormat.CODE_128,
-        ]);
-
-        const reader = new BrowserMultiFormatReader(hints);
-        readerRef.current = reader;
-
-        reader.listVideoInputDevices().then((devices) => {
-            const backCamera = devices.find(
-                (d) => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('traseira')
-            );
-            const deviceId = backCamera?.deviceId || devices[devices.length - 1].deviceId;
-
-            reader.decodeFromConstraints(
-                { video: { deviceId: { exact: deviceId }, width: { min: 1280, ideal: 1920 }, height: { min: 720, ideal: 1080 } } },
-                videoRef.current!,
-                (result) => {
-                    if (result) {
-                        const code = result.getText();
-                        if (isValidBarcode(code)) {
-                            setScannedCode(code);
-                            setScanning(false);
-                            reader.reset();
-                        }
-                    }
-                });
-        });
+        setScanning(true);
     };
 
     return (
@@ -133,8 +109,7 @@ export default function Scanner() {
                     </button>
                 </div>
             ) : scanning ? (
-                <div className="scanner-viewport">
-                    <video ref={videoRef} className="scanner-video" />
+                <div className="scanner-viewport" ref={scannerRef}>
                     <div className="scanner-overlay">
                         <div className="scanner-frame">
                             <div className="corner top-left" />
